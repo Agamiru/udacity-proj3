@@ -44,19 +44,24 @@ jobs:
       - restore_cache:
           keys: [frontend-build]
       - run:
-          name: Unit tests for frontend
+          name: Run unit tests for frontend
           command: |
             cd frontend
             npm run test
                 
-  # test-backend:
-  #   docker:
-  #     image: circleci/node:13.8.0
-  #   steps:
-  #     - checkout
-  #     - restore_cache:
-  #         keys: [backend-build]
-  #     # Your job code here
+  test-backend:
+    docker:
+      image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Run unit tests for backend
+          command: |
+            cd backend
+            npm run test
+
 
 workflows:
   default:
