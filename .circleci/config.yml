@@ -8,7 +8,7 @@ commands:
     description: Notify via slack on fail
     steps:
       - slack/notify:
-          channel: ABCXYZ
+          channel: C03NW4N9HDF
           event: fail
           template: basic_fail_1
 
@@ -102,8 +102,11 @@ jobs:
           command: |
             cd backend
             npm install
+            npm install --save-dev webpack@5.73.0
+            npm update mkdirp --depth 6
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
+      - slack-notify-on-fail
 
 
 workflows:
