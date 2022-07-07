@@ -1,5 +1,17 @@
 version: 2.1
 
+orbs:
+  slack: circleci/slack@4.1
+
+commands:
+  slack-notify-on-fail:
+    description: Notify via slack on fail
+    steps:
+      - slack/notify:
+          channel: ABCXYZ
+          event: fail
+          template: basic_fail_1
+
 jobs:
   build-frontend:
     docker:
