@@ -31,11 +31,11 @@ commands:
             aws cloudformation delete-stack --stack-name "udapeople-backend-<< pipeline.parameters.workflow_id >>"
             aws cloudformation delete-stack --stack-name "udapeople-frontend-<< pipeline.parameters.workflow_id >>"
 
-  notify-and-destroy:
-    description: Notify via slack on-fail and destroy already created aws infrastructure
-    steps:
-      - slack-notify-on-fail
-      - destroy-environment
+  # notify-and-destroy:
+  #   description: Notify via slack on-fail and destroy already created aws infrastructure
+  #   steps:
+  #     - slack-notify-on-fail
+  #     - destroy-environment
 
 
 jobs:
@@ -168,7 +168,8 @@ jobs:
       #     paths:
       #       - project/.circleci/ansible/inventory.txt
       # Here's where you will add some code to rollback on failure
-      - notify-and-destroy
+      - slack-notify-on-fail
+      - destroy-environment
 
 
 workflows:
