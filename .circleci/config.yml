@@ -3,6 +3,11 @@ version: 2.1
 orbs:
   slack: circleci/slack@4.1
 
+parameters:
+  workflow_id:
+    type: string
+    default: ${CIRCLE_WORKFLOW_ID:0:7}
+
 commands:
   slack-notify-on-fail:
     description: Notify via slack on fail
@@ -11,6 +16,27 @@ commands:
           channel: C03NW4N9HDF
           event: fail
           template: basic_fail_1
+
+  destroy-environment:
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    parameters:
+      workflow_id:
+        type: string
+        default: ${CIRCLE_WORKFLOW_ID:0:7}
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name "udapeople-backend-<< pipeline.parameters.workflow_id >>"
+            aws cloudformation delete-stack --stack-name "udapeople-frontend-<< pipeline.parameters.workflow_id >>"
+
+  notify-and-destroy:
+    description: Notify via slack on-fail and destroy already created aws infrastructure
+    steps:
+      - slack-notify-on-fail
+      - destroy-environment
+
 
 jobs:
   build-frontend:
@@ -108,6 +134,42 @@ jobs:
             npm audit --audit-level=critical
       - slack-notify-on-fail
 
+  deploy-infrastructure:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Ensure back-end infrastructure exists
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/backend.yml \
+              --tags project=your-tag \
+              --stack-name "udapeople-backend-<< pipeline.parameters.workflow_id >>" \
+              --parameter-overrides ID="<< pipeline.parameters.workflow_id >>"  
+              exit 1
+
+      - run:
+          name: Ensure front-end infrastructure exist
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/frontend.yml \
+              --tags project=your-tag \
+              --stack-name "udapeople-frontend-<< pipeline.parameters.workflow_id >>" \
+              --parameter-overrides ID="<< pipeline.parameters.workflow_id >>"
+          
+      # - run:
+      #     name: Add back-end ip to ansible inventory
+      #     command: |
+      #       # Your code here
+      #       exit 1
+      # - persist_to_workspace:
+      #     root: ~/
+      #     paths:
+      #       - project/.circleci/ansible/inventory.txt
+      # Here's where you will add some code to rollback on failure
+      - notify-and-destroy
+
 
 workflows:
   default:
@@ -122,3 +184,6 @@ workflows:
           requires: [build-frontend]
       - scan-backend:
           requires: [build-backend]
+      - deploy-infrastructure:
+          requires: [build-backend, build-frontend]
+      
