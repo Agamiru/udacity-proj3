@@ -210,7 +210,7 @@ jobs:
 
   run-migrations:
     docker:
-      - image: cimg/node
+      - image: cimg/node:18.4.0
     parameters:
       kv-key:
         type: string
