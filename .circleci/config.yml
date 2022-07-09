@@ -8,7 +8,7 @@ parameters:
     type: string
     default: ${CIRCLE_WORKFLOW_ID:0:7}
 
-# commands:
+commands:
 #   slack-notify-on-fail:
 #     description: Notify via slack on fail
 #     steps:
