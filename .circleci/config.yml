@@ -198,6 +198,7 @@ jobs:
           command: |
             apk add --update tar gzip
             apk add --update ansible
+            pip3 install --no-cache-dir awscli
 
       - run:
           name: Configure server
@@ -209,13 +210,19 @@ jobs:
 
   run-migrations:
     docker:
-      - image: circleci/node:13.8.0
+      - image: cimg/node:13.8.0
     parameters:
       kv-key:
         type: string
         default: xqzlp7yq
     steps:
       - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apt install python3
+            pip3 install --no-cache-dir awscli
+
       - run:
           name: Run migrations
           command: |
