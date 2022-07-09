@@ -16,6 +16,7 @@ commands:
 #           channel: C03NW4N9HDF
 #           event: fail
 #           template: basic_fail_1
+            ##### yum install epel-release -y
 
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
@@ -181,26 +182,94 @@ jobs:
 
       - destroy-environment
 
-  # configure-infrastructure:
-    # docker:
-    #   # Docker image here that supports Ansible
-    # steps:
-    #   - checkout
-    #   - add_ssh_keys:
-    #       fingerprints: ["1d:83:9d:af:35:e2:5b:9c:ae:3c:89:6b:43:be:ef:4e"] 
-    #   # attach workspace
-    #   - run:
-    #       name: Install dependencies
-    #       command: |
-    #         # Your code here
-    #         exit 1
-    #   - run:
-    #       name: Configure server
-    #       command: |
-    #         # Your code here
-    #         exit 1
-    #   # Here's where you will add some code to rollback on failure    
+  configure-infrastructure:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["1d:83:9d:af:35:e2:5b:9c:ae:3c:89:6b:43:be:ef:4e"] 
 
+      - attach_workspace:
+          at: ~/
+
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update tar gzip
+            apk add --update ansible
+
+      - run:
+          name: Configure server
+          command: |
+            cd .circleci/ansible
+            ansible-playbook -i inventory.txt configure-server.yml
+
+      - destroy-environment
+
+  run-migrations:
+    docker:
+      - image: circleci/node:13.8.0
+    parameters:
+      kv-key:
+        type: string
+        default: xqzlp7yq
+    steps:
+      - checkout
+      - run:
+          name: Run migrations
+          command: |
+            cd backend
+            npm install
+            npm run migrations > migrations_dump.txt
+
+      - run:
+          name: Send migration results to keyvalue.immanuel.co
+          command: |
+            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+            then
+              curl -H "content-length: 0" -X POST https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/<< parameters.kv-key >>/migration_<< pipeline.parameters.workflow_id >>/1
+            fi
+     
+      - destroy-environment
+      
+  deploy-frontend:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Install Node and npm
+          command: |
+            yum install nodejs npm --enablerepo=epel
+
+      - run:
+          name: Install tar and gzip
+          command: |
+            yum install -y tar gzip
+
+      - run:
+          name: Get backend url
+          command: |
+            export BACKEND_IP=$(aws ec2 describe-instances \
+              --filters Name=tag:Name,Values=backend-<< pipeline.parameters.workflow_id >> \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text)
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "API_URL = ${API_URL}"
+            echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
+            cat frontend/.env
+
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm install
+            npm run build
+            tar -czvf artifact-"<< pipeline.parameters.workflow_id >> ".tar.gz dist
+            aws s3 cp dist s3://udapeople-<< pipeline.parameters.workflow_id >>  --recursive
+      
+      - destroy-environment
 
 workflows:
   default:
@@ -217,4 +286,14 @@ workflows:
           requires: [build-backend]
       - deploy-infrastructure:
           requires: [build-backend, build-frontend]
+          # filters:
+          #   branches:
+          #     only:
+          #       - main
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
+      - deploy-frontend:
+          requires: [run-migrations]
       
