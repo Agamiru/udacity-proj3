@@ -220,8 +220,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            sudo apt install python3
-            pip3 install --no-cache-dir awscli
+            python3 -m pip install awscli
 
       - run:
           name: Run migrations
