@@ -312,43 +312,46 @@ jobs:
       - destroy-environment-on-fail
       - destroy-environment-on-pass
 
-  # smoke-test:
-  #   docker:
-  #     - image: alpine:latest
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Install dependencies
-  #         command: |
-  #           apk --no-cache add curl
-  #     # - run:
-  #     #     name: Get backend url
-  #     #     command: |
-  #     #       # your code here
-  #     - run:
-  #         name: Backend smoke test.
-  #         command: |
-  #           export API_URL="http://${BACKEND_IP}:3030"
-  #           echo "${API_URL}"
-  #           if curl "${API_URL}/api/status" | grep "ok"
-  #           then
-  #               return 0
-  #           else
-  #               return 1
-  #           fi
-  #     - run:
-  #         name: Frontend smoke test.
-  #         command: |
-  #           URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employees"            
-  #           echo ${URL} 
-  #           if curl -s ${URL} | grep "Welcome"
-  #           then
-  #             return 1
-  #           else
-  #             return 1
-  #           fi
-  #     - destroy-environment-on-fail
-  #     - destroy-environment-on-pass
+  smoke-tests:
+    docker:
+      - image: alpine:latest
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apk --no-cache add curl
+      - run:
+          name: Get backend url
+          command: |
+            export BACKEND_IP=$(aws ec2 describe-instances \
+              --filters Name=tag:Name,Values=backend-<< pipeline.parameters.workflow_id >> \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text)
+      - run:
+          name: Backend smoke test.
+          command: |
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+            if curl "${API_URL}/api/status" | grep "ok"
+            then
+                return 0
+            else
+                return 1
+            fi
+      - run:
+          name: Frontend smoke test.
+          command: |
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employees"            
+            echo ${URL} 
+            if curl -s ${URL} | grep "Welcome"
+            then
+              return 1
+            else
+              return 1
+            fi
+      - destroy-environment-on-fail
+      - destroy-environment-on-pass
 
 workflows:
   default:
@@ -379,4 +382,8 @@ workflows:
           requires: [run-migrations]
       - deploy-backend:
           requires: [run-migrations]
+      - smoke-tests:
+          requires:
+            - deploy-frontend
+            - deploy-backend
       
