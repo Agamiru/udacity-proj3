@@ -173,7 +173,7 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - project/.circleci/ansible/inventory.txt
+            - ~/.circleci/ansible/inventory.txt
 
       # - slack/notify:
       #     channel: C03NW4N9HDF
@@ -292,7 +292,9 @@ workflows:
       - scan-backend:
           requires: [build-backend]
       - deploy-infrastructure:
-          requires: [build-backend, build-frontend]
+          requires:
+            - scan-frontend
+            - scan-backend
           # filters:
           #   branches:
           #     only:
