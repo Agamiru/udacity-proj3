@@ -15,11 +15,18 @@
 - name: Start App
   become: true
   shell: |
+    cd ~/project
     npm install
     pm2 stop default
     pm2 start npm -- start
   args:
     executable: /bin/bash
-    chdir: ~/project
+  register: start_app_results
+
+- name: Show results after app starts
+  debug:
+    msg: "{{ start_app_results.stdout_lines }}"
+  
+
 
 
