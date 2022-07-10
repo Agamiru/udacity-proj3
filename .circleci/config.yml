@@ -210,17 +210,21 @@ jobs:
 
   run-migrations:
     docker:
-      - image: amazon/aws-cli
+      - image: circleci/node:13.8.0
+
     parameters:
       kv-key:
         type: string
         default: xqzlp7yq
+        
     steps:
       - checkout
       - run:
           name: Install dependencies
           command: |
-            yum install nodejs npm
+            sudo apt install python3-pip
+            pip3 --version
+            pip3 install awscli
 
       - run:
           name: Run migrations
@@ -241,18 +245,15 @@ jobs:
       
   deploy-frontend:
     docker:
-      - image: amazon/aws-cli
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - run:
-          name: Install Node and npm
+          name: Install Python and AWSCLI
           command: |
-            yum install nodejs npm
-
-      - run:
-          name: Install tar and gzip
-          command: |
-            yum install -y tar gzip
+            sudo apt install python3-pip
+            pip3 --version
+            pip3 install awscli
 
       - run:
           name: Get backend url
