@@ -169,7 +169,6 @@ jobs:
               --filters Name=tag:Name,Values=backend-<< pipeline.parameters.workflow_id >> \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text | cat >> .circleci/ansible/inventory.txt
-            cat .circleci/ansible/inventory.txt
 
       - persist_to_workspace:
           root: ~/
