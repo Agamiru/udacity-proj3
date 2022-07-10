@@ -1,0 +1,25 @@
+---
+
+- name: Make directory
+  become: true
+  file:
+    path: ~/project
+    state: directory
+
+- name: Copy files
+  become: true
+  unarchive:
+    src: ~/project/artifact.tar.gz
+    dest: ~/project
+
+- name: Start App
+  become: true
+  shell: |
+    npm install
+    pm2 stop default
+    pm2 start npm -- start
+  chdir: ~/project
+  args:
+    executable: /bin/bash
+
+

@@ -18,12 +18,22 @@ commands:
 #           template: basic_fail_1
             ##### yum install epel-release -y
 
-  destroy-environment:
+  destroy-environment-on-fail:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     steps:
       - run:
-          name: Destroy environments
+          name: Destroy environments on fail
           when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name "udapeople-backend-<< pipeline.parameters.workflow_id >>"
+            aws cloudformation delete-stack --stack-name "udapeople-frontend-<< pipeline.parameters.workflow_id >>"
+
+  destroy-environment-on-pass:
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    steps:
+      - run:
+          name: Destroy environments on success
+          when: on_success
           command: |
             aws cloudformation delete-stack --stack-name "udapeople-backend-<< pipeline.parameters.workflow_id >>"
             aws cloudformation delete-stack --stack-name "udapeople-frontend-<< pipeline.parameters.workflow_id >>"
@@ -176,7 +186,7 @@ jobs:
       #     event: fail
       #     template: basic_fail_1
 
-      - destroy-environment
+      - destroy-environment-on-fail
 
   configure-infrastructure:
     docker:
@@ -193,7 +203,7 @@ jobs:
           name: Install dependencies
           command: |
             pip3 install ansible
-            pip3 install --no-cache-dir awscli
+            pip3 install awscli
 
       - run:
           name: Configure server
@@ -201,7 +211,7 @@ jobs:
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
 
-      - destroy-environment
+      - destroy-environment-on-fail
 
   run-migrations:
     docker:
@@ -217,7 +227,6 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            pip3 --version
             pip3 install awscli
 
       - run:
@@ -235,7 +244,7 @@ jobs:
               curl -H "content-length: 0" -X POST https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/<< parameters.kv-key >>/migration_<< pipeline.parameters.workflow_id >>/1
             fi
      
-      - destroy-environment
+      - destroy-environment-on-fail
       
   deploy-frontend:
     docker:
@@ -268,7 +277,40 @@ jobs:
             tar -czvf artifact-"<< pipeline.parameters.workflow_id >> ".tar.gz dist
             aws s3 cp dist s3://udapeople-<< pipeline.parameters.workflow_id >>  --recursive
       
-      - destroy-environment
+      - destroy-environment-on-fail
+
+  deploy-backend:
+    docker:
+      - image: cimg/python:3.8.13-node
+    steps:
+      - checkout
+
+      - add_ssh_keys:
+          fingerprints: ["1d:83:9d:af:35:e2:5b:9c:ae:3c:89:6b:43:be:ef:4e"]
+
+      - attach_workspace:
+          at: ~/
+
+      - run:
+          name: Install dependencies
+          command: |
+            pip3 install awscli
+            pip3 install ansible
+      - run:
+          name: Deploy backend
+          command: |
+            cd backend
+            npm i
+            npm run build
+            cd ..
+            tar -C backend -czvf artifact.tar.gz .
+            cd .circleci/ansible
+            echo "Contents  of the inventory.txt file is -------"
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
+
+      - destroy-environment-on-fail
+      - destroy-environment-on-pass
 
 workflows:
   default:
