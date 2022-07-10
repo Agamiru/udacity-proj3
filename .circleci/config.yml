@@ -323,8 +323,8 @@ jobs:
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
 
-      - destroy-environment-on-fail
-      - destroy-environment-on-pass
+      # - destroy-environment-on-fail
+      # - destroy-environment-on-pass
 
   smoke-tests:
     docker:
@@ -364,8 +364,8 @@ jobs:
             else
               exit 1
             fi
-      - destroy-environment-on-fail
-      - destroy-environment-on-pass
+      # - destroy-environment-on-fail
+      # - destroy-environment-on-pass
 
 workflows:
   default:

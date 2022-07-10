@@ -12,16 +12,27 @@
     src: ~/project/artifact.tar.gz
     dest: ~/project
 
+- name: Project files
+  become: true
+  shell: ls ~/project
+  args:
+    executable: /bin/bash
+  register: after_unarchiving
+
 - name: Start App
   become: true
   shell: |
-    cd ~/project
     npm install
     pm2 stop default
     pm2 start npm -- start
   args:
     executable: /bin/bash
+    chdir: ~/project
   register: start_app_results
+
+- name: Results after unarchiving
+  debug:
+    msg: "{{ after_unarchiving.stdout_lines }}"
 
 - name: Show results after app starts
   debug:
