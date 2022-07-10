@@ -38,6 +38,23 @@ commands:
             aws cloudformation delete-stack --stack-name "udapeople-backend-<< pipeline.parameters.workflow_id >>"
             aws cloudformation delete-stack --stack-name "udapeople-frontend-<< pipeline.parameters.workflow_id >>"
 
+  revert-migrations:
+    description: Revert the last migration if successfully run in the current workflow.
+    steps:
+      - run:
+          name: Revert migrations
+          # Add when this will run
+          command: |
+            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
+            SUCCESS = 1
+            if(( $SUCCESS==1 )); 
+            then
+            #  cd ~/project/backend
+            #  npm install
+            #  Add revert code here. You can find this in the Getting Started section.
+              exit 1
+            fi
+
   # notify-and-destroy:
   #   description: Notify via slack on-fail and destroy already created aws infrastructure
   #   steps:
@@ -314,20 +331,19 @@ jobs:
 
   smoke-tests:
     docker:
-      - image: alpine:latest
+      - image: cimg/python:3.8.13-node
     steps:
       - checkout
       - run:
           name: Install dependencies
           command: |
-            apk --no-cache add curl
+            apt install curl
       - run:
           name: Get backend url
           command: |
-            export BACKEND_IP=$(aws ec2 describe-instances \
-              --filters Name=tag:Name,Values=backend-<< pipeline.parameters.workflow_id >> \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --output text)
+            echo "export BACKEND_IP=$(aws ec2 describe-instances --filters Name=tag:Name,Values=backend-<< pipeline.parameters.workflow_id >> --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)" >> $BASH_ENV
+            source $BASH_ENV
+            echo "This is the backend IP: ${BACKEND_IP}"
       - run:
           name: Backend smoke test.
           command: |
