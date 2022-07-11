@@ -19,7 +19,7 @@
     executable: /bin/bash
   register: after_unarchiving
 
-- name: Start App
+- name: npm install
   become: true
   shell: |
     cd /home/ubuntu/backend
@@ -30,13 +30,26 @@
     executable: /bin/bash
   register: start_app_results
 
+- name: pm2 start
+  become: true
+  shell: |
+    pwd
+    pm2 start npm -- start
+  args:
+    executable: /bin/bash
+  register: pm2_start_results
+
 - name: Results after unarchiving
   debug:
     msg: "{{ after_unarchiving.stdout_lines }}"
 
-- name: Show results after app starts
+- name: Show results node installs
   debug:
     msg: "{{ start_app_results.stdout_lines }}"
+
+- name: Show results after app pm2 starts
+  debug:
+    msg: "{{ pm2_start_results.stdout_lines }}"
   
 
 
