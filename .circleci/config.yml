@@ -174,7 +174,7 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              --tags project=your-tag \
+              --tags project=udapeople \
               --stack-name "udapeople-backend-<< pipeline.parameters.workflow_id >>" \
               --parameter-overrides ID="<< pipeline.parameters.workflow_id >>"
 
@@ -183,7 +183,7 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              --tags project=your-tag \
+              --tags project=udapeople \
               --stack-name "udapeople-frontend-<< pipeline.parameters.workflow_id >>" \
               --parameter-overrides ID="<< pipeline.parameters.workflow_id >>"
           
@@ -292,6 +292,7 @@ jobs:
             aws s3 cp dist s3://udapeople-<< pipeline.parameters.workflow_id >>  --recursive
       
       - destroy-environment-on-fail
+      - revert-migrations
 
   deploy-backend:
     docker:
@@ -331,6 +332,7 @@ jobs:
             - project/backend/.env
 
       - destroy-environment-on-fail
+      - revert-migrations
       # - destroy-environment-on-pass
 
   smoke-tests:
@@ -371,8 +373,39 @@ jobs:
             else
               exit 1
             fi
+      # - destroy-environment-on-fail
+      - revert-migrations
+
+  cloudfront-update:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      # - run:
+      #     name: Install dependencies
+      #     command: |
+      #       # your code here
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            export OldWorkflowID=$(aws cloudformation \
+            list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+            --no-paginate --output text)
+            echo $OldWorkflowID > ~/project/OldWorkflowID.txt
+            echo "Old workflow id: $OldWorkflowID"
+            aws cloudformation deploy \
+              --template-file .circleci/files/cloudfront.yml \
+              --stack-name InitialStack \
+              --parameter-overrides WorkflowID="udapeople-<< pipeline.parameters.workflow_id >>" \
+              --tags project=udapeople
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/OldWorkflowID.txt
+
       - destroy-environment-on-fail
-      # - destroy-environment-on-pass
+      - revert-migrations
+
 
 workflows:
   default:
