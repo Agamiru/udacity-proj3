@@ -317,10 +317,8 @@ jobs:
             printenv > ./backend/.env
             ls ./backend
             cd backend
-            echo "backend files before build: $(ls)"
             npm i
             npm run build
-            echo "backend files after build: $(ls)"
             cd ..
             tar -C backend -czvf artifact.tar.gz .
             cd .circleci/ansible
