@@ -54,7 +54,7 @@ commands:
             then
               cd ~/project/backend
               npm install
-              npm run migration:revert
+              npm run migrations:revert
             fi
 
   # notify-and-destroy:
@@ -374,7 +374,7 @@ jobs:
             else
               exit 1
             fi
-      - destroy-environment-on-fail
+      # - destroy-environment-on-fail
       - revert-migrations
 
   cloudfront-update:
