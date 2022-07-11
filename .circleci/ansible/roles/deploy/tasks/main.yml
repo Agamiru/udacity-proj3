@@ -3,18 +3,18 @@
 - name: Make directory
   become: true
   file:
-    path: ~/project
+    path: /home/ubuntu/backend
     state: directory
 
 - name: Copy files
   become: true
   unarchive:
-    src: ~/project/artifact.tar.gz
-    dest: ~/project
+    src: ../../artifact.tar.gz
+    dest: /home/ubuntu/backend
 
 - name: Project files
   become: true
-  shell: ls ~/project
+  shell: ls /home/ubuntu/backend
   args:
     executable: /bin/bash
   register: after_unarchiving
@@ -27,7 +27,7 @@
     pm2 start npm -- start
   args:
     executable: /bin/bash
-    chdir: ~/project
+    chdir: /home/ubuntu/backend
   register: start_app_results
 
 - name: Results after unarchiving
