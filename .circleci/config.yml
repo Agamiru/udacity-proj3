@@ -374,7 +374,7 @@ jobs:
             else
               exit 1
             fi
-      # - destroy-environment-on-fail
+      - destroy-environment-on-fail
       - revert-migrations
 
   cloudfront-update:
