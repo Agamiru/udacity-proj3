@@ -228,6 +228,8 @@ jobs:
         
     steps:
       - checkout
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Install dependencies
           command: |
@@ -239,6 +241,7 @@ jobs:
             cd backend
             npm install
             npm run migrations > migrations_dump.txt
+            cat ~/project/backend/migrations_dump.txt
 
       - run:
           name: Send migration results to keyvalue.immanuel.co
@@ -247,6 +250,11 @@ jobs:
             then
               curl -H "content-length: 0" -X POST https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/<< pipeline.parameters.kv-key >>/migration_<< pipeline.parameters.workflow_id >>/1
             fi
+
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/backend/migrations_dump.txt
      
       - destroy-environment-on-fail
       
