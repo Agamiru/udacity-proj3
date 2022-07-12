@@ -388,7 +388,7 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/cloudfront.yml \
               --stack-name InitialStack-<< pipeline.parameters.workflow_id >> \
-              --parameter-overrides WorkflowID=udapeople-<< pipeline.parameters.workflow_id >>" \
+              --parameter-overrides WorkflowID=udapeople-<< pipeline.parameters.workflow_id >> \
               --tags project=udapeople
             echo "New workflow id: udapeople-<< pipeline.parameters.workflow_id >>"
       - persist_to_workspace:
