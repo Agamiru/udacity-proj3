@@ -20,20 +20,18 @@
   register: after_unarchiving
 
 - name: npm install
-  become: true
   shell: |
+    echo ${USER}
     cd /home/ubuntu/backend
-    pwd
     npm install
   args:
     executable: /bin/bash
   register: start_app_results
 
 - name: pm2 start
-  become: true
   shell: |
+    echo ${USER}
     cd /home/ubuntu/backend
-    pwd
     pm2 start npm -- start
   args:
     executable: /bin/bash
