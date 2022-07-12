@@ -359,7 +359,7 @@ jobs:
             echo ${URL} 
             if curl -s ${URL} | grep "Welcome"
             then
-              exit 1
+              exit 0
             else
               exit 1
             fi
@@ -369,9 +369,14 @@ jobs:
 
   cloudfront-update:
     docker:
-      - image: amazon/aws-cli
+      - image: cimg/python:3.8.13-node
     steps:
       - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt install curl
+            pip3 install awscli
       - run:
           name: Update cloudfront distribution
           command: |
