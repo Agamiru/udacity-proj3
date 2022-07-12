@@ -20,6 +20,7 @@
   register: after_unarchiving
 
 - name: npm install
+  become: true
   shell: |
     echo ${USER}
     cd /home/ubuntu/backend
@@ -41,7 +42,7 @@
   debug:
     msg: "{{ after_unarchiving.stdout_lines }}"
 
-- name: Show results node installs
+- name: Show results npm installs
   debug:
     msg: "{{ start_app_results.stdout_lines }}"
 
