@@ -32,16 +32,6 @@ commands:
             aws cloudformation delete-stack --stack-name "udapeople-backend-<< pipeline.parameters.workflow_id >>"
             aws cloudformation delete-stack --stack-name "udapeople-frontend-<< pipeline.parameters.workflow_id >>"
 
-  destroy-environment-on-pass:
-    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-    steps:
-      - run:
-          name: Destroy environments on success
-          when: on_success
-          command: |
-            aws cloudformation delete-stack --stack-name "udapeople-backend-<< pipeline.parameters.workflow_id >>"
-            aws cloudformation delete-stack --stack-name "udapeople-frontend-<< pipeline.parameters.workflow_id >>"
-
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     steps:
@@ -334,7 +324,6 @@ jobs:
 
       - destroy-environment-on-fail
       - revert-migrations
-      # - destroy-environment-on-pass
 
   smoke-tests:
     docker:
@@ -374,7 +363,8 @@ jobs:
             else
               exit 1
             fi
-      # - destroy-environment-on-fail
+
+      - destroy-environment-on-fail
       - revert-migrations
 
   cloudfront-update:
@@ -382,10 +372,6 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
-      # - run:
-      #     name: Install dependencies
-      #     command: |
-      #       # your code here
       - run:
           name: Update cloudfront distribution
           command: |
@@ -441,4 +427,7 @@ workflows:
           requires:
             - deploy-frontend
             - deploy-backend
+      - cloudfront-update:
+          requires:
+            - smoke-tests
       
