@@ -461,31 +461,31 @@ workflows:
           filters:
             branches:
               only:
-                - main
+                - master
       - configure-infrastructure:
           requires: [deploy-infrastructure]
           filters:
             branches:
               only:
-                - main
+                - master
       - run-migrations:
           requires: [configure-infrastructure]
           filters:
             branches:
               only:
-                - main
+                - master
       - deploy-frontend:
           requires: [run-migrations]
           filters:
             branches:
               only:
-                - main
+                - master
       - deploy-backend:
           requires: [run-migrations]
           filters:
             branches:
               only:
-                - main
+                - master
       - smoke-tests:
           requires:
             - deploy-frontend
@@ -493,19 +493,19 @@ workflows:
           filters:
             branches:
               only:
-                - main
+                - master
       - cloudfront-update:
           requires:
             - smoke-tests
           filters:
             branches:
               only:
-                - main
+                - master
       - cleanup:
           requires:
             - cloudfront-update
           filters:
             branches:
               only:
-                - main
+                - master
       
